@@ -3,10 +3,10 @@
 from sys import argv
 from enum import Enum
 from random import choice
+from wordle_words import answers, dictionary
 
 
 DEFAULT_NUM_GUESSES = 6
-DICT_PATH = '/Users/eugene/Documents/Personal/word-games/assets/words_easy.txt'
 
 
 class LetterStatus(Enum):
@@ -26,13 +26,12 @@ class LetterStatus(Enum):
 class Solver():
     '''Solves wordle.'''
 
-    def __init__(self, answer, dict_path, max_num_guesses=DEFAULT_NUM_GUESSES):
+    def __init__(self, answer, max_num_guesses=DEFAULT_NUM_GUESSES):
         '''Initializes solver.'''
         self.answer = answer
         self.max_num_guesses = max_num_guesses
 
-        self.dictionary = []
-        self.dict_path = dict_path
+        self.dictionary = answers[0] + dictionary[0]
 
         self.guesses = []
 
@@ -68,7 +67,8 @@ class Solver():
             if guess == self.answer:
                 return True
 
-            # Filter out dictionary terms that don't work.
+            # Checks a word against a letter status and returns True if the word
+            # satisfies the criteria. Otherwise, returns False.
             def filter_words(word):
                 if word == guess:
                     return False
@@ -77,7 +77,7 @@ class Solver():
                         if word[i] != guess[i]:
                             return False
                     elif status == LetterStatus.YELLOW:
-                        if guess[i] not in word:
+                        if word[i] == guess[i] or guess[i] not in word:
                             return False
                     elif status == LetterStatus.BLACK:
                         if guess[i] in word:
@@ -86,13 +86,6 @@ class Solver():
             self.dictionary = list(filter(filter_words, self.dictionary))
 
             return solve_helper(guess_number+1)
-
-        # Construct dictionary
-        with open(self.dict_path, 'r') as r:
-            self.dictionary = list(
-                map(lambda word: word.strip().lower(),
-                    filter(lambda word: len(word.strip()) == len(self.answer),
-                    r.readlines())))
 
         if self.answer not in self.dictionary:
             print(f'{self.answer} is not in the dictionary. Cannot solve')
@@ -116,7 +109,7 @@ def main():
 
     answer = argv[1]
 
-    wordle = Solver(answer.lower(), DICT_PATH)
+    wordle = Solver(answer.lower())
     wordle.solve()
 
     return
